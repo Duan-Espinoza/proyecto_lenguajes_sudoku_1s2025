@@ -1,4 +1,4 @@
-package com.mycompany.my.sudoku.prolog.java;
+package com.miempresa.sudoku;
 
 /**
  * Hello world!
