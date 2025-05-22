@@ -99,7 +99,8 @@ generar_pistas(TableroCompleto, TableroConPistas, NumPistas) :-
 %   - No se repiten índices
 % ==========================================================
 generar_indices_pistas(Max, N, Indices) :-
-    numlist(0, Max-1, Lista),
+    Max1 is Max - 1,
+    numlist(0, Max1, Lista),
     random_permutation(Lista, Mezclada),
     length(Indices, N),
     append(Indices, _, Mezclada).
