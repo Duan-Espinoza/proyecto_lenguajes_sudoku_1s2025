@@ -1,1 +1,0 @@
-% Acá se establecerán las reglas DURANTE el sudoku
