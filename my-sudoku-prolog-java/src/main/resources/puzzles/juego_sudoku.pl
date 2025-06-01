@@ -103,7 +103,7 @@ bloques_unicos(Tab) :-
     bloques(R1,R2,R3), bloques(R4,R5,R6), bloques(R7,R8,R9).
 
 % Carga del generador externo
-:- ["../engine/generador.pl"].
+:- use_module('../engine/generador').
 
 % ------------------------------------------
 % accion_insertar(+F, +C, +V)

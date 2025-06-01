@@ -1,101 +1,118 @@
 package com.miempresa.sudoku.controller;
 
+import com.miempresa.sudoku.model.SudokuModel;
+import com.miempresa.sudoku.model.GameStats;
+import java.util.Map;
 import org.jpl7.*;
-import java.io.InputStream;
-import java.nio.file.*;
 
 public class PrologController {
+    private final SudokuModel model;
+    private final GameStats stats;
 
-    static {
-        // Configuración específica para Windows
-        System.setProperty("swi.home.dir", "C:\\Program Files\\swipl");
-        System.setProperty("jpl.library.path", "C:\\Program Files\\swipl\\bin\\jpl.dll");
+    public PrologController(SudokuModel model, GameStats stats) {
+        this.model = model;
+        this.stats = stats;
+        cargarArchivosProlog();
+    }
+
+    private void cargarArchivosProlog() {
+        String generadorPath = getClass().getResource("/engine/generador.pl").getPath();
+        String juegoPath = getClass().getResource("/puzzles/juego_sudoku.pl").getPath();
         
-        try {
-            // Inicializar JPL explícitamente
-            JPL.init();
-            System.out.println("JPL inicializado correctamente");
-        } catch (UnsatisfiedLinkError e) {
-            System.err.println("Error crítico al cargar JPL:");
-            e.printStackTrace();
-            System.exit(1);
-        }
-    }
-
-    public PrologController() {
-        inicializarProlog();
-    }
-
-    private void inicializarProlog() {
-        // Cargar archivos desde recursos usando ClassLoader
-        cargarArchivoProlog("engine/generador.pl");
-        cargarArchivoProlog("puzzles/juego_sudoku.pl");
-    }
-
-    private void cargarArchivoProlog(String resourcePath) {
-        try {
-            // Obtener recurso como InputStream
-            InputStream inputStream = getClass().getClassLoader().getResourceAsStream(resourcePath);
-            if (inputStream == null) {
-                System.err.println("Archivo no encontrado: " + resourcePath);
-                return;
-            }
-            
-            // Crear archivo temporal
-            Path tempFile = Files.createTempFile("prolog_", ".pl");
-            Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
-            String filePath = tempFile.toAbsolutePath().toString();
-            
-            // Consultar en Prolog
-            String consultQuery = "consult('" + filePath.replace("\\", "/") + "')";
-            Query query = new Query(consultQuery);
-            
-            if (query.hasSolution()) {
-                System.out.println("Archivo cargado: " + resourcePath);
-            } else {
-                System.err.println("Error al cargar: " + resourcePath);
-            }
-            
-            // Cerrar recursos
-            inputStream.close();
-        } catch (Exception e) {
-            System.err.println("Excepción al cargar " + resourcePath + ": " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    public void iniciarJuego() {
-        ejecutarConsulta("iniciar_juego");
-    }
-
-    public void insertar(int fila, int col, int valor) {
-        ejecutarConsulta(String.format("accion_insertar(%d, %d, %d)", fila, col, valor));
-    }
-
-    public void verificar() {
-        ejecutarConsulta("accion_verificar");
-    }
-
-    public void sugerir(int fila, int col) {
-        ejecutarConsulta(String.format("accion_sugerir(%d, %d)", fila, col));
-    }
-
-    public void verSolucion() {
-        ejecutarConsulta("ver_solucion");
-    }
-
-    public void reiniciar() {
-        ejecutarConsulta("reiniciar");
+        generadorPath = normalizarRutaWindows(generadorPath);
+        juegoPath = normalizarRutaWindows(juegoPath);
+        
+        new Query("consult", new Term[]{new Atom(generadorPath)}).hasSolution();
+        new Query("consult", new Term[]{new Atom(juegoPath)}).hasSolution();
+        new Query("iniciar_juego").hasSolution();
     }
     
-    private void ejecutarConsulta(String consulta) {
-        try {
-            Query q = new Query(consulta);
-            if (!q.hasSolution()) {
-                System.err.println("La consulta falló: " + consulta);
+    private String normalizarRutaWindows(String path) {
+        if (System.getProperty("os.name").toLowerCase().contains("win")) {
+            return path.replaceFirst("^/(.:/)", "$1");
+        }
+        return path;
+    }
+
+    public void nuevoJuego() {
+        Query q = new Query("tablero_actual(T)");
+        Map<String, Term> sol = q.oneSolution();
+        model.setTableroActual(convertirTermATablero(sol.get("T")));
+        model.setVidas(3);
+        model.setSugerencias(5);
+        stats.setEstado("abandono");
+    }
+
+    private int[][] convertirTermATablero(Term term) {
+        int[][] tablero = new int[9][9];
+        
+        // Verificar que es una lista
+        if (!term.isList()) {
+            throw new RuntimeException("Término no es una lista: " + term);
+        }
+        
+        Term[] filas = term.toTermArray();
+        
+        for (int i = 0; i < 9; i++) {
+            Term fila = filas[i];
+            
+            if (!fila.isList()) {
+                throw new RuntimeException("Fila no es una lista: " + fila);
             }
-        } catch (Exception e) {
-            System.err.println("Error en consulta '" + consulta + "': " + e.getMessage());
+            
+            Term[] cols = fila.toTermArray();
+            
+            for (int j = 0; j < 9; j++) {
+                try {
+                    tablero[i][j] = cols[j].intValue();
+                } catch (JPLException e) {
+                    tablero[i][j] = 0; // Celda vacía
+                }
+            }
+        }
+        return tablero;
+    }
+
+    public boolean insertarNumero(int fila, int col, int valor) {
+        Query q = new Query(
+            "accion_insertar", 
+            new Term[]{
+                new org.jpl7.Integer(fila), 
+                new org.jpl7.Integer(col), 
+                new org.jpl7.Integer(valor)
+            }
+        );
+        
+        if (q.hasSolution()) {
+            stats.incrementarVerificaciones();
+            return true;
+        } else {
+            stats.incrementarErrores();
+            model.setVidas(model.getVidas() - 1);
+            return false;
         }
     }
+    
+    public void darSugerencia(int fila, int col) {
+        new Query(
+            "accion_sugerir", 
+            new Term[]{
+                new org.jpl7.Integer(fila), 
+                new org.jpl7.Integer(col)
+            }
+        ).hasSolution();
+        stats.incrementarSugerencias();
+        model.setSugerencias(model.getSugerencias() - 1);
+    }
+    
+    public void mostrarSolucion() {
+        Query q = new Query("ver_solucion");
+        q.hasSolution();
+    
+        Query qTab = new Query("tablero_actual(T)");
+        Map<String, Term> sol = qTab.oneSolution();
+        model.setSolucion(convertirTermATablero(sol.get("T")));
+    }
+    
+    
 }

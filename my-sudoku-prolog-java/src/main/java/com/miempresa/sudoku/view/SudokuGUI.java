@@ -1,96 +1,196 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package com.miempresa.sudoku.view;
 
 import com.miempresa.sudoku.controller.PrologController;
-import java.awt.Font;
-import javax.swing.JTextField;
+import com.miempresa.sudoku.model.SudokuModel;
+import com.miempresa.sudoku.model.GameStats;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
-public class SudokuGUI extends javax.swing.JFrame {
-
-    private PrologController controller;
+public class SudokuGUI extends JFrame {
+    private final SudokuModel model = new SudokuModel();
+    private final GameStats stats = new GameStats();
+    private final PrologController controller;
+    private JTextField[][] celdas = new JTextField[9][9];
+    private JLabel lblVidas, lblSugerencias;
+    private int filaSeleccionada = -1;
+    private int colSeleccionada = -1;
 
     public SudokuGUI() {
-        initComponents();
-        initCustomComponents();
+        controller = new PrologController(model, stats);
+        initUI();
+        actualizarTablero();
     }
 
-    private void initCustomComponents() {
-        controller = new PrologController();
-        controller.iniciarJuego();
-
-        // Configurar campos de texto del tablero
-        for (int i = 0; i < 81; i++) {
-            JTextField field = new JTextField();
-            field.setHorizontalAlignment(JTextField.CENTER);
-            field.setFont(new Font("SansSerif", Font.BOLD, 20));
-            panelTablero.add(field);
+    private void initUI() {
+        setTitle("Sudoku Prolog-Java");
+        setLayout(new BorderLayout());
+        
+        // Panel de estado
+        JPanel panelEstado = new JPanel();
+        lblVidas = new JLabel("Vidas: 3");
+        lblSugerencias = new JLabel("Sugerencias: 5");
+        panelEstado.add(lblVidas);
+        panelEstado.add(lblSugerencias);
+        
+        // Panel del tablero
+        JPanel tableroPanel = new JPanel(new GridLayout(9, 9));
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                celdas[i][j] = new JTextField();
+                celdas[i][j].setHorizontalAlignment(JTextField.CENTER);
+                celdas[i][j].setFont(new Font("SansSerif", Font.BOLD, 20));
+                
+                // Resaltar bloques 3x3
+                if ((i / 3 + j / 3) % 2 == 0) {
+                    celdas[i][j].setBackground(new Color(240, 240, 240));
+                }
+                
+                final int fila = i, col = j;
+                
+                // Listener para selección de celda
+                celdas[i][j].addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        filaSeleccionada = fila;
+                        colSeleccionada = col;
+                        resaltarCeldaSeleccionada();
+                    }
+                });
+                
+                // Listener para entrada de datos
+                celdas[i][j].addActionListener(e -> {
+                    try {
+                        int valor = Integer.parseInt(celdas[fila][col].getText());
+                        if (valor >= 1 && valor <= 9) {
+                            if (controller.insertarNumero(fila+1, col+1, valor)) {
+                                celdas[fila][col].setForeground(Color.BLACK);
+                            } else {
+                                celdas[fila][col].setForeground(Color.RED);
+                            }
+                            actualizarEstado();
+                        } else {
+                            JOptionPane.showMessageDialog(this, "Solo números del 1 al 9");
+                        }
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(this, "Entrada inválida");
+                    }
+                });
+                
+                tableroPanel.add(celdas[i][j]);
+            }
         }
-
-        // Configurar acciones de los botones
-        btnVerificar.addActionListener(e -> controller.verificar());
-        btnSugerencia.addActionListener(e -> controller.sugerir(1, 1));
-        btnSolucion.addActionListener(e -> controller.verSolucion());
-        btnReiniciar.addActionListener(e -> controller.reiniciar());
-    }
-
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
-
-        panelTablero = new javax.swing.JPanel();
-        panelBotones = new javax.swing.JPanel();
-        btnVerificar = new javax.swing.JButton();
-        btnSugerencia = new javax.swing.JButton();
-        btnSolucion = new javax.swing.JButton();
-        btnReiniciar = new javax.swing.JButton();
-
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Sudoku Prolog");
-        getContentPane().setLayout(new java.awt.BorderLayout());
-
-        panelTablero.setLayout(new java.awt.GridLayout(9, 9));
-        getContentPane().add(panelTablero, java.awt.BorderLayout.CENTER);
-
-        panelBotones.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER));
-
-        btnVerificar.setText("Verificar");
-        panelBotones.add(btnVerificar);
-
-        btnSugerencia.setText("Sugerencia");
-        panelBotones.add(btnSugerencia);
-
-        btnSolucion.setText("Ver solución");
-        panelBotones.add(btnSolucion);
-
-        btnReiniciar.setText("Reiniciar");
-        panelBotones.add(btnReiniciar);
-
-        getContentPane().add(panelBotones, java.awt.BorderLayout.SOUTH);
-
-        pack();
-    }// </editor-fold>//GEN-END:initComponents
-
-    public static void main(String args[]) {
-        try {
-            javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(SudokuGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        
+        // Panel de botones
+        JPanel buttonPanel = new JPanel();
+        String[] botones = {"Nuevo Juego", "Reiniciar", "Verificar", "Sugerencia", "Solución"};
+        for (String texto : botones) {
+            JButton btn = new JButton(texto);
+            btn.addActionListener(crearManejadorBoton(texto));
+            buttonPanel.add(btn);
         }
-
-        java.awt.EventQueue.invokeLater(() -> {
-            new SudokuGUI().setVisible(true);
-        });
+        
+        add(panelEstado, BorderLayout.NORTH);
+        add(tableroPanel, BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
+        
+        setSize(600, 600);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+    }
+    
+    private void resaltarCeldaSeleccionada() {
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                celdas[i][j].setBackground(
+                    (i / 3 + j / 3) % 2 == 0 ? 
+                    new Color(240, 240, 240) : 
+                    Color.WHITE
+                );
+            }
+        }
+        if (filaSeleccionada >= 0 && colSeleccionada >= 0) {
+            celdas[filaSeleccionada][colSeleccionada].setBackground(Color.YELLOW);
+        }
+    }
+    
+    private ActionListener crearManejadorBoton(String texto) {
+        return e -> {
+            switch (texto) {
+                case "Nuevo Juego":
+                    controller.nuevoJuego();
+                    actualizarTablero();
+                    break;
+                    
+                case "Reiniciar":
+                    // Restaurar tablero inicial
+                    model.setTableroActual(model.getTableroInicial());
+                    actualizarTablero();
+                    break;
+                    
+                case "Verificar":
+                    JOptionPane.showMessageDialog(this, stats.toString());
+                    break;
+                    
+                case "Sugerencia":
+                    if (model.getSugerencias() > 0) {
+                        if (filaSeleccionada >= 0 && colSeleccionada >= 0) {
+                            controller.darSugerencia(filaSeleccionada + 1, colSeleccionada + 1);
+                            actualizarTablero();
+                            actualizarEstado();
+                        } else {
+                            JOptionPane.showMessageDialog(this, "Seleccione una celda primero");
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Sin sugerencias disponibles");
+                    }
+                    break;
+                    
+                case "Solución":
+                    controller.mostrarSolucion();
+                    // Mostrar solución completa
+                    int[][] solucion = model.getSolucion();
+                    for (int i = 0; i < 9; i++) {
+                        for (int j = 0; j < 9; j++) {
+                            celdas[i][j].setText(String.valueOf(solucion[i][j]));
+                            celdas[i][j].setForeground(
+                                model.getTableroInicial()[i][j] == 0 ? 
+                                Color.GREEN : Color.BLUE
+                            );
+                            celdas[i][j].setEditable(false);
+                        }
+                    }
+                    stats.setEstado("autosolución");
+                    break;
+            }
+        };
+    }
+    
+    private void actualizarTablero() {
+        int[][] tablero = model.getTableroActual();
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (tablero[i][j] != 0) {
+                    celdas[i][j].setText(String.valueOf(tablero[i][j]));
+                    celdas[i][j].setEditable(false);
+                    celdas[i][j].setForeground(Color.BLUE);
+                } else {
+                    celdas[i][j].setText("");
+                    celdas[i][j].setEditable(true);
+                    celdas[i][j].setForeground(Color.BLACK);
+                }
+            }
+        }
+        resaltarCeldaSeleccionada();
+    }
+    
+    private void actualizarEstado() {
+        lblVidas.setText("Vidas: " + model.getVidas());
+        lblSugerencias.setText("Sugerencias: " + model.getSugerencias());
     }
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnReiniciar;
-    private javax.swing.JButton btnSolucion;
-    private javax.swing.JButton btnSugerencia;
-    private javax.swing.JButton btnVerificar;
-    private javax.swing.JPanel panelBotones;
-    private javax.swing.JPanel panelTablero;
-    // End of variables declaration//GEN-END:variables
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new SudokuGUI().setVisible(true));
+    }
 }
