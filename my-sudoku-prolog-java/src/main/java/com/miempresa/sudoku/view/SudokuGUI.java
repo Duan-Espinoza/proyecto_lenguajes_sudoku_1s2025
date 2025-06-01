@@ -8,6 +8,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 
 public class SudokuGUI extends JFrame {
     private final SudokuModel model = new SudokuModel();
@@ -170,6 +171,7 @@ public class SudokuGUI extends JFrame {
     private void actualizarTablero() {
         int[][] tablero = model.getTableroActual();
         for (int i = 0; i < 9; i++) {
+            System.out.println(Arrays.toString(tablero[i]));
             for (int j = 0; j < 9; j++) {
                 if (tablero[i][j] != 0) {
                     celdas[i][j].setText(String.valueOf(tablero[i][j]));
