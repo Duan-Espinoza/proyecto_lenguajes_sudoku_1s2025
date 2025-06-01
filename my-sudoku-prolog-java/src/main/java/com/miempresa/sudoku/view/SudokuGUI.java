@@ -170,8 +170,9 @@ public class SudokuGUI extends JFrame {
     
     private void actualizarTablero() {
         int[][] tablero = model.getTableroActual();
+        //System.out.println("Actualizando tablero...");
         for (int i = 0; i < 9; i++) {
-            System.out.println(Arrays.toString(tablero[i]));
+            //System.out.println(Arrays.toString(tablero[i]));
             for (int j = 0; j < 9; j++) {
                 if (tablero[i][j] != 0) {
                     celdas[i][j].setText(String.valueOf(tablero[i][j]));

@@ -4,6 +4,9 @@ import com.miempresa.sudoku.model.SudokuModel;
 import com.miempresa.sudoku.model.GameStats;
 import java.util.Map;
 import org.jpl7.*;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 public class PrologController {
     private final SudokuModel model;
@@ -16,15 +19,32 @@ public class PrologController {
     }
 
     private void cargarArchivosProlog() {
-        String generadorPath = getClass().getResource("/engine/generador.pl").getPath();
-        String juegoPath = getClass().getResource("/puzzles/juego_sudoku.pl").getPath();
-        
-        generadorPath = normalizarRutaWindows(generadorPath);
-        juegoPath = normalizarRutaWindows(juegoPath);
-        
-        new Query("consult", new Term[]{new Atom(generadorPath)}).hasSolution();
-        new Query("consult", new Term[]{new Atom(juegoPath)}).hasSolution();
-        new Query("iniciar_juego").hasSolution();
+        try {
+            // Decodificar rutas para manejar espacios
+            String generadorPath = URLDecoder.decode(
+                getClass().getResource("/engine/generador.pl").getPath(),
+                StandardCharsets.UTF_8.name()
+            );
+            
+            String juegoPath = URLDecoder.decode(
+                getClass().getResource("/puzzles/juego_sudoku.pl").getPath(),
+                StandardCharsets.UTF_8.name()
+            );
+            
+            // Imprimir rutas para depuración
+            System.out.println("Ruta generador: " + generadorPath);
+            System.out.println("Ruta juego: " + juegoPath);
+            
+            // Normalizar rutas para Windows
+            generadorPath = generadorPath.replaceFirst("^/(.:/)", "$1");
+            juegoPath = juegoPath.replaceFirst("^/(.:/)", "$1");
+            
+            new Query("consult", new Term[]{new Atom(generadorPath)}).hasSolution();
+            new Query("consult", new Term[]{new Atom(juegoPath)}).hasSolution();
+            new Query("iniciar_juego").hasSolution();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
     
     private String normalizarRutaWindows(String path) {
