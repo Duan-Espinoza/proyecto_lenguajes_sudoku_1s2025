@@ -150,13 +150,18 @@ public class SudokuGUI extends JFrame {
                     
                 case "Solución":
                     controller.mostrarSolucion();
-                    // Mostrar solución completa
                     int[][] solucion = model.getSolucion();
+
+                    if (solucion == null) {
+                        JOptionPane.showMessageDialog(this, "No se pudo obtener la solución.");
+                        return;
+                    }
+
                     for (int i = 0; i < 9; i++) {
                         for (int j = 0; j < 9; j++) {
                             celdas[i][j].setText(String.valueOf(solucion[i][j]));
                             celdas[i][j].setForeground(
-                                model.getTableroInicial()[i][j] == 0 ? 
+                                model.getTableroInicial()[i][j] == 0 ?
                                 Color.GREEN : Color.BLUE
                             );
                             celdas[i][j].setEditable(false);

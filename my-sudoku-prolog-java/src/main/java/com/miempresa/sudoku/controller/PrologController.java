@@ -18,7 +18,10 @@ public class PrologController {
         cargarArchivosProlog();
         nuevoJuego();
     }
-
+    
+    
+    
+    
     private void cargarArchivosProlog() {
         try {
             // Decodificar rutas para manejar espacios
@@ -158,12 +161,34 @@ public class PrologController {
     
     public void mostrarSolucion() {
         Query q = new Query("ver_solucion");
-        q.hasSolution();
-    
+        if (!q.hasSolution()) {
+            System.err.println("No se pudo encontrar una solución.");
+            return;
+        }
+
         Query qTab = new Query("tablero_actual(T)");
+        if (!qTab.hasSolution()) {
+            System.err.println("No se pudo obtener el tablero de solución.");
+            return;
+        }
+
         Map<String, Term> sol = qTab.oneSolution();
-        model.setSolucion(convertirTermATablero(sol.get("T")));
+        Term t = sol.get("T");
+
+        if (t == null) {
+            System.err.println("El término T es null.");
+            return;
+        }
+
+        int[][] solucion = convertirTermATablero(t);
+        if (solucion == null) {
+            System.err.println("Error al convertir el término T a tablero.");
+            return;
+        }
+
+        model.setSolucion(solucion);
     }
+
     
     
 }

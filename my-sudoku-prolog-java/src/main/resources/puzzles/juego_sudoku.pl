@@ -25,6 +25,7 @@
 :- dynamic tablero_inicial/1, tablero_actual/1.
 :- dynamic vidas/1, sugerencias/1.
 :- dynamic estadisticas/5.
+:- dynamic solucion_actual/1.
 
 % ------------------------------------------
 % iniciar_juego
@@ -33,18 +34,27 @@
 % ------------------------------------------
 iniciar_juego :-
     % Generar tablero completo y pistas
-    nuevo_juego(Puzzle),
+    engine:generar_tablero_completo(Solucion),
+    retractall(solucion_actual(_)),
+    assert(solucion_actual(Solucion)),
+    random_between(17, 25, NumPistas),
+    engine:generar_pistas(Solucion, Puzzle, NumPistas),
+    
+    % Inicializar tablero
     retractall(tablero_inicial(_)),
     retractall(tablero_actual(_)),
     assert(tablero_inicial(Puzzle)),
     assert(tablero_actual(Puzzle)),
+    
     % Iniciar vidas y sugerencias
     retractall(vidas(_)), assert(vidas(3)),
     retractall(sugerencias(_)), assert(sugerencias(5)),
-    % Iniciar estadísticas: celdas, verificaciones, errores, sugerencias, estado final
+    
+    % Iniciar estadísticas
     retractall(estadisticas(_,_,_,_,_)),
     length(Puzzle, 9), flatten(Puzzle, Flat), length(Flat, Total),
     assert(estadisticas(Total, 0, 0, 0, pending)),
+    
     format("~n*** ¡Nuevo juego iniciado! Tienes 3 vidas y 5 sugerencias. ***~n"),
     mostrar_tablero.
 
@@ -54,12 +64,15 @@ iniciar_juego :-
 % ------------------------------------------
 mostrar_tablero :- tablero_actual(T), mostrar_tablero(T).
 mostrar_tablero(T) :-
-    nl, forall(nth1(I, T, Fila), (
-        forall(nth1(J, Fila, V), (
-            (var(V) -> write('_ ') ; format('~w ', [V]))
-        )), nl,
-        (I mod 3 =:= 0 -> writeln('-------------') ; true)
+    forall(member(Fila, T), (
+        maplist(valor_para_imprimir, Fila, ValoresStr),
+        atomic_list_concat(ValoresStr, ',', Linea),
+        writeln(Linea)
     )).
+
+valor_para_imprimir(V, '0') :- var(V), !.
+valor_para_imprimir(V, S) :- number(V), number_string(V, S).
+
 
 % ------------------------------------------
 % obtener(Tablero, Fila, Columna, Valor)
@@ -134,17 +147,26 @@ accion_verificar :-
 % ------------------------------------------
 accion_sugerir(F, C) :-
     sugerencias(S), S > 0,
-    tablero_inicial(Init), engine:generar_tablero_completo(Sol),
-    obtener(Sol, F, C, V), accion_insertar(F,C,V),
-    retract(sugerencias(S)), S1 is S-1, assert(sugerencias(S1)),
+    solucion_actual(Sol),
+    obtener(Sol, F, C, V),
+    accion_insertar(F, C, V),
+    S1 is S - 1,
+    retract(sugerencias(S)),
+    assert(sugerencias(S1)),
     format('Sugerencias restantes: ~w~n', [S1]).
+
 
 % ------------------------------------------
 % ver_solucion
 %   Muestra la solución completa.
 % ------------------------------------------
 ver_solucion :-
-    engine:generar_tablero_completo(Sol), mostrar_tablero(Sol).
+    solucion_actual(Sol),
+    retractall(tablero_actual(_)),
+    assertz(tablero_actual(Sol)),
+    writeln('Tablero actualizado con la solución:'),
+    mostrar_tablero.
+
 
 % ------------------------------------------
 % reiniciar
