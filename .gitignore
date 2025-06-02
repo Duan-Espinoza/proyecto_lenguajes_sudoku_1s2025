@@ -1,3 +1,2 @@
-# Archivos de construcción de Maven
-/target/
-
+# Ignorar archivos de construcción de Maven
+target/
