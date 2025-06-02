@@ -1,0 +1,34 @@
+# Archivos de construcción de Maven
+/target/
+
+# Configuración de IDEs
+*.iml
+.idea/
+*.ipr
+*.iws
+.vscode/
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos temporales y de logs
+*.log
+*.class
+
+# Archivos de Prolog generados o temporales (si aplicara)
+*.qlf
+*.xwam
+
+# Archivos personales o de ejecución
+*.swp
+*.bak
+*.tmp
+
+# Configuración de ejecución de Java (si aplica)
+*.launch
+
+# Archivos que no deberían subirse al repositorio
+*.jar
+*.war
+*.ear
