@@ -1,7 +1,11 @@
 com\miempresa\sudoku\view\VentanaPrincipal$2.class
-com\miempresa\sudoku\model\Tablero.class
 com\miempresa\sudoku\view\VentanaPrincipal$4.class
+com\miempresa\sudoku\model\GameStats.class
 com\miempresa\sudoku\view\VentanaPrincipal.class
 com\miempresa\sudoku\view\VentanaPrincipal$3.class
+com\miempresa\sudoku\controller\PrologController.class
 com\miempresa\sudoku\App.class
+com\miempresa\sudoku\model\SudokuModel.class
+com\miempresa\sudoku\view\SudokuGUI.class
+com\miempresa\sudoku\view\SudokuGUI$1.class
 com\miempresa\sudoku\view\VentanaPrincipal$1.class

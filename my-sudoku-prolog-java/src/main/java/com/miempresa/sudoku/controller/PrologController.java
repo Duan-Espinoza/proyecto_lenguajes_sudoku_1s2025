@@ -16,6 +16,7 @@ public class PrologController {
         this.model = model;
         this.stats = stats;
         cargarArchivosProlog();
+        nuevoJuego();
     }
 
     private void cargarArchivosProlog() {
@@ -55,12 +56,42 @@ public class PrologController {
     }
 
     public void nuevoJuego() {
-        Query q = new Query("tablero_actual(T)");
-        Map<String, Term> sol = q.oneSolution();
-        model.setTableroActual(convertirTermATablero(sol.get("T")));
-        model.setVidas(3);
-        model.setSugerencias(5);
-        stats.setEstado("abandono");
+        try {
+            // Ejecutar nuevo juego en Prolog
+            new Query("iniciar_juego").hasSolution();
+            
+            // Obtener tablero actual
+            Query q = new Query("tablero_actual(T)");
+            if (q.hasSolution()) {
+                Map<String, Term> sol = q.oneSolution();
+                int[][] tablero = convertirTermATablero(sol.get("T"));
+                model.setTableroActual(tablero);
+                model.setTableroInicial(tablero); // Guardar como inicial
+            } else {
+                System.err.println("No se encontró solución para tablero_actual");
+                model.setTableroActual(new int[9][9]);
+            }
+            
+            model.setVidas(3);
+            model.setSugerencias(5);
+            stats.setEstado("abandono");
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Tablero de respaldo en caso de error
+            int[][] tableroRespaldo = {
+                {0,0,0,0,0,0,0,0,0},
+                {0,0,0,0,0,0,0,0,0},
+                {0,0,0,0,0,0,0,0,0},
+                {0,0,0,0,0,0,0,0,0},
+                {0,0,0,0,0,0,0,0,0},
+                {0,0,0,0,0,0,0,0,0},
+                {0,0,0,0,0,0,0,0,0},
+                {0,0,0,0,0,0,0,0,0},
+                {0,0,0,0,0,0,0,0,0}
+            };
+            model.setTableroActual(tableroRespaldo);
+            model.setTableroInicial(tableroRespaldo);
+        }
     }
 
     private int[][] convertirTermATablero(Term term) {

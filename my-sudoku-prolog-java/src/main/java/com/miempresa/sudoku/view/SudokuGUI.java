@@ -170,7 +170,19 @@ public class SudokuGUI extends JFrame {
     
     private void actualizarTablero() {
         int[][] tablero = model.getTableroActual();
-        //System.out.println("Actualizando tablero...");
+        // Verificar si tablero es null
+        if (tablero == null) {
+            System.err.println("Advertencia: Tablero es null, usando respaldo");
+            tablero = new int[9][9];
+        }
+        
+        // Imprimir en consola para depuración
+        System.out.println("Actualizando tablero:");
+        for (int i = 0; i < 9; i++) {
+            System.out.println(Arrays.toString(tablero[i]));
+        }
+        
+        
         for (int i = 0; i < 9; i++) {
             //System.out.println(Arrays.toString(tablero[i]));
             for (int j = 0; j < 9; j++) {

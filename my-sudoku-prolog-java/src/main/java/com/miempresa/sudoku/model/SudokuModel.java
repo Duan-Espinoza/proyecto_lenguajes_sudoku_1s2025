@@ -12,11 +12,12 @@ package com.miempresa.sudoku.model;
 
 
 public class SudokuModel {
-    private int[][] tableroInicial;
-    private int[][] tableroActual;
+    // Inicializar los arreglos para evitar null
+    private int[][] tableroInicial = new int[9][9];
+    private int[][] tableroActual = new int[9][9];
     private int vidas = 3;
     private int sugerencias = 5;
-    private int[][] solucion; // Nuevo campo para almacenar la solución
+    private int[][] solucion = new int[9][9];
 
     // Getters y Setters
     public int[][] getTableroInicial() { return tableroInicial; }

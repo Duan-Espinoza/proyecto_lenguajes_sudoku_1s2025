@@ -167,3 +167,13 @@ reiniciar :-
  * 7) Solución:         ?- ver_solucion.
  * 8) Reiniciar:        ?- reiniciar.
  */
+
+% Asegurar que tablero_actual siempre tenga un valor
+:- dynamic tablero_actual/1.
+tablero_actual([]).
+
+% Para depuración
+mostrar_tablero_actual :-
+    tablero_actual(T),
+    write('Tablero actual en Prolog:'), nl,
+    mostrar_tablero(T).
