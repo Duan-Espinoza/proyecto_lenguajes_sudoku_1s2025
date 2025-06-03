@@ -100,10 +100,8 @@ public class SudokuGUI extends JFrame {
                             celdas[fila][col].setBackground((fila / 3 + col / 3) % 2 == 0 ? new Color(240, 240, 240) : Color.WHITE);
                         } else {
                             System.out.println("(JAVA) Movimiento inválido: Fila " + (fila + 1) + ", Col " + (col + 1) + ", Valor: " + valor);
-                            celdas[fila][col].setBackground(Color.RED);
-                            celdas[fila][col].setForeground(Color.WHITE);
-                            JOptionPane.showMessageDialog(this, "Movimiento inválido");
-                        }
+                            celdas[fila][col].setForeground(Color.RED);
+                            celdas[fila][col].setBackground(Color.PINK);}
 
                     } catch (NumberFormatException ex) {
                         JOptionPane.showMessageDialog(this, "Entrada inválida");
