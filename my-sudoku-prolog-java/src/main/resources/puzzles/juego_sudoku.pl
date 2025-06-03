@@ -5,10 +5,11 @@
 
 :- use_module(library(clpfd)).
 :- use_module(library(random)).
+
 :- dynamic tablero_inicial/1, tablero_actual/1.
 :- dynamic vidas/1, sugerencias/1.
 :- dynamic estadisticas/5.
-:- dynamic solucion_actual/1.
+:- dynamic solucion_actual/1. 
 :- use_module('../engine/generador').
 
 iniciar_juego :-
@@ -146,9 +147,9 @@ accion_sugerir(F, C) :-
     format('Sugerencias restantes: ~w~n', [S1]).
 
 ver_solucion :-
-    solucion_actual(Sol),
-    retractall(tablero_actual(_)),
-    assertz(tablero_actual(Sol)),
+    solucion_actual(Sol), % Mostrar solución actual
+    retractall(tablero_actual(_)), % Limpiar tablero actual
+    assertz(tablero_actual(Sol)),% Actualizar tablero actual con la solución
     writeln('Tablero actualizado con la solución:'),
     mostrar_tablero.
 

@@ -175,11 +175,11 @@ public class SudokuGUI extends JFrame {
                     break;
 
                 case "Reiniciar":
-                    // Restaurar tablero inicial
-                    model.setTableroActual(model.getTableroInicial());
+                    controller.reiniciarSudoku();
                     filaSeleccionada = -1;
                     colSeleccionada = -1;
                     actualizarTablero();
+                    actualizarEstado();
                     break;
 
                 case "Verificar":
@@ -249,7 +249,7 @@ public class SudokuGUI extends JFrame {
                     celdas[i][j].setForeground(Color.BLACK);
                 }
             }
-        }
+        }        
         resaltarCeldaSeleccionada();
     }
 
