@@ -21,17 +21,27 @@ public class SudokuGUI extends JFrame {
 
     public SudokuGUI() {
         controller = new PrologController(model, stats);
-        initUI();
-        actualizarTablero();
+        try {
+            System.out.println("Iniciando initUI...");
+            initUI();
+            System.out.println("UI inicializada");
+            actualizarTablero();
+            System.out.println("Tablero actualizado");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
         private void actualizarEstado() {
         lblVidas.setText("Vidas: " + model.getVidas());
+        System.out.println("(ActualizarEstado) Vidas restantes: " + model.getVidas());
+        lblSugerencias.setText("Sugerencias: " + model.getSugerencias());
+
         if (model.getVidas() <= 0) {
             JOptionPane.showMessageDialog(this, "¡Juego terminado! No tienes más vidas.");
-            controller.nuevoJuego();  // Reiniciar el juego
+            controller.nuevoJuego();
+            actualizarTablero();
         }
-        lblSugerencias.setText("Sugerencias: " + model.getSugerencias());
     }
 
     private void initUI() {
@@ -75,25 +85,51 @@ public class SudokuGUI extends JFrame {
                 // Listener para entrada de datos
                 celdas[i][j].addActionListener(e -> {
                     try {
-                        int valor = Integer.parseInt(celdas[fila][col].getText());  // Obtener valor ingresado
-                        // Validar que el valor esté entre 1 y 9
-                        if (valor >= 1 && valor <= 9) {
-                            if (controller.insertarNumero(fila + 1, col + 1, valor)) {
-                                celdas[fila][col].setForeground(Color.BLACK);
-                            } else {
-                                celdas[fila][col].setForeground(Color.RED);  
-                            }
+                        int valor = Integer.parseInt(celdas[fila][col].getText().trim());
 
-                            actualizarEstado();
-                        } else {
+                        if (valor < 1 || valor > 9) {
                             JOptionPane.showMessageDialog(this, "Solo números del 1 al 9");
+                            return;
                         }
+
+                        boolean exito = controller.insertarNumero(fila + 1, col + 1, valor);
+
+                        if (exito) {
+                            System.out.println("(JAVA) Movimiento correcto: Fila " + (fila + 1) + ", Col " + (col + 1) + ", Valor: " + valor);
+                            celdas[fila][col].setForeground(Color.BLACK);
+                            celdas[fila][col].setBackground((fila / 3 + col / 3) % 2 == 0 ? new Color(240, 240, 240) : Color.WHITE);
+                        } else {
+                            System.out.println("(JAVA) Movimiento inválido: Fila " + (fila + 1) + ", Col " + (col + 1) + ", Valor: " + valor);
+                            celdas[fila][col].setBackground(Color.RED);
+                            celdas[fila][col].setForeground(Color.WHITE);
+                            JOptionPane.showMessageDialog(this, "Movimiento inválido");
+                        }
+
                     } catch (NumberFormatException ex) {
                         JOptionPane.showMessageDialog(this, "Entrada inválida");
+                    } finally {
+                        actualizarEstado(); 
+                        System.out.println("(JAVA) Actualizando estado después de la acción");
+
+                        if (model.getVidas() <= 0) {
+                            JOptionPane.showMessageDialog(this, "¡Juego terminado! No tienes más vidas.");
+                            controller.nuevoJuego();
+                            actualizarTablero();
+                            actualizarEstado(); // Actualiza después del reinicio
+                        }
                     }
                 });
 
                 tableroPanel.add(celdas[i][j]);
+                celdas[i][j].setText("");  // Inicializar como vacío
+                celdas[i][j].setEditable(true);  // Permitir edición
+                celdas[i][j].setForeground(Color.BLACK);  // Color de texto por defecto
+                celdas[i][j].setBackground(
+                    (i / 3 + j / 3) % 2 == 0 ?
+                    new Color(240, 240, 240) :
+                    Color.WHITE
+                );  // Color de fondo por defecto
+
             }
         }
 
@@ -190,7 +226,7 @@ public class SudokuGUI extends JFrame {
             }
         };
     }
-
+    // Método para actualizar el tablero con los datos del modelo
     private void actualizarTablero() {
         int[][] tablero = model.getTableroActual();
         if (tablero == null) {

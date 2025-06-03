@@ -16,7 +16,7 @@ public class SudokuModel {
     private int[][] tableroInicial = new int[9][9];
     private int[][] tableroActual = new int[9][9];
     private int vidas = 3;
-    private int sugerencias = 5;
+    private int sugerencias = 5; 
     private int[][] solucion = new int[9][9];
 
     // Getters y Setters
