@@ -41,6 +41,12 @@
         <artifactId>jpl</artifactId>
         <version>9.1.24</version>
     </dependency>
+
+    <dependency>
+      <groupId>com.formdev</groupId>
+      <artifactId>flatlaf</artifactId>
+      <version>3.2</version>
+    </dependency>
     
     <!-- Dependencias de JUnit para testing -->
     <dependency>
