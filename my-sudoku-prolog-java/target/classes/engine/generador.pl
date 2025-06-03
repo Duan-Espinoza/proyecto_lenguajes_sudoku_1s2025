@@ -1,3 +1,10 @@
+/*
+*   Archivo: generador.pl
+*   Generador de tableros de Sudoku en Prolog.
+*   Contiene predicados para crear un tablero completo, generar
+*   pistas y crear un nuevo juego con restricciones específicas.
+*/
+
 :- use_module(library(clpfd)).
 :- use_module(library(random)).
 
@@ -175,11 +182,12 @@ dividir_tablero(Lista, [Fila|Rest]) :-
 %   - Debe tener al menos 2 pistas por fila y columna para evitar trivialidad
 % ==========================================================
 nuevo_juego(Tablero) :-
-    repeat,
+     repeat,
         generar_tablero_completo(Completo),
         random_between(17, 25, Pistas),
         generar_pistas(Completo, Tablero, Pistas),
         tablero_valido(Tablero),
+        no_cadenas_triviales(Tablero),
     !.
 
 % ==========================================================
@@ -222,3 +230,48 @@ tablero_valido(Tablero) :-
 cuenta_pistas(Lista, Cantidad) :-
     include(nonvar, Lista, Pistas),
     length(Pistas, Cantidad).
+
+% ==========================================================
+% Predicado: valido_sudoku(+Tablero)
+%
+% Descripción:
+%   Verifica que un tablero (incompleto o completo) cumpla con
+%   las reglas del Sudoku: no repite números en filas, columnas
+%   ni bloques 3x3 (ignorando celdas vacías).
+% ==========================================================
+valido_sudoku(Tablero) :-
+    maplist(valida_lista, Tablero),         % filas válidas
+    transpose(Tablero, Columnas),
+    maplist(valida_lista, Columnas),        % columnas válidas
+    Tablero = [R1,R2,R3,R4,R5,R6,R7,R8,R9],
+    bloques_validos(R1, R2, R3),
+    bloques_validos(R4, R5, R6),
+    bloques_validos(R7, R8, R9).
+
+valida_lista(Lista) :-
+    exclude(var, Lista, Numeros),
+    all_distinct(Numeros).
+
+bloques_validos([], [], []).
+bloques_validos([A,B,C|R1], [D,E,F|R2], [G,H,I|R3]) :-
+    valida_lista([A,B,C,D,E,F,G,H,I]),
+    bloques_validos(R1, R2, R3).
+
+% Verifica que no haya cadenas de solo una celda conectada (horizontal o vertical)
+no_cadenas_triviales(Tablero) :-
+    % Revisa filas
+    forall(member(Fila, Tablero), \+ cadena_trivial(Fila)),
+    % Revisa columnas
+    transpose(Tablero, Columnas),
+    forall(member(Col, Columnas), \+ cadena_trivial(Col)).
+
+% Detecta si hay una pista sola sin vecinos en una fila/columna
+cadena_trivial(Lista) :-
+    findall(Index, (nth0(Index, Lista, Val), nonvar(Val)), Indices),
+    sort(Indices, Ordenadas),
+    incluye_aislada(Ordenadas).
+
+incluye_aislada([_]). % Solo 1 pista → trivial
+incluye_aislada([A,B|Resto]) :-
+    (B - A > 1 -> true ; incluye_aislada([B|Resto])).
+

@@ -24,22 +24,25 @@ public class SudokuModel {
     public void setTableroInicial(int[][] tableroInicial) { 
         this.tableroInicial = tableroInicial; 
     }
-    // ... otros getters/setters
-
-
-
+    // Métodos para obtener y establecer el número de vidas restantes
     public int getVidas() { return vidas; }
     public void setVidas(int vidas) { this.vidas = vidas; }
+
+    // Métodos para obtener y establecer el número de sugerencias restantes
     public int getSugerencias() { return sugerencias; }
     public void setSugerencias(int sugerencias) { this.sugerencias = sugerencias; }
 
+    // Métodos para obtener y establecer el tablero actual del Sudoku
     public int[][] getTableroActual() { return tableroActual; }
     public void setTableroActual(int[][] tableroActual) { 
         this.tableroActual = tableroActual; 
     }
-    
+
+    // Métodos para obtener y establecer la solución del Sudoku
     public int[][] getSolucion() { return solucion; }
     public void setSolucion(int[][] solucion) { 
         this.solucion = solucion; 
     }
+
+
 }

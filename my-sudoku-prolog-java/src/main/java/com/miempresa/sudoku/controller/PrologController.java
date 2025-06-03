@@ -11,6 +11,8 @@ import java.nio.charset.StandardCharsets;
 public class PrologController {
     private final SudokuModel model;
     private final GameStats stats;
+    private static final int VIDAS_INICIALES = 3;
+    private static final int SUGERENCIAS_INICIALES = 5;
 
     public PrologController(SudokuModel model, GameStats stats) {
         this.model = model;
@@ -18,9 +20,6 @@ public class PrologController {
         cargarArchivosProlog();
         nuevoJuego();
     }
-    
-    
-    
     
     private void cargarArchivosProlog() {
         try {
@@ -43,10 +42,15 @@ public class PrologController {
             generadorPath = generadorPath.replaceFirst("^/(.:/)", "$1");
             juegoPath = juegoPath.replaceFirst("^/(.:/)", "$1");
             
+            // Cargar archivos Prolog
             new Query("consult", new Term[]{new Atom(generadorPath)}).hasSolution();
             new Query("consult", new Term[]{new Atom(juegoPath)}).hasSolution();
-            new Query("iniciar_juego").hasSolution();
+            System.out.println("Archivos Prolog cargados correctamente.");
+
         } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (JPLException e) {
+            System.err.println("Error al cargar archivos Prolog: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -59,93 +63,75 @@ public class PrologController {
     }
 
     public void nuevoJuego() {
-        try {
-            // Ejecutar nuevo juego en Prolog
-            new Query("iniciar_juego").hasSolution();
-            
-            // Obtener tablero actual
-            Query q = new Query("tablero_actual(T)");
-            if (q.hasSolution()) {
-                Map<String, Term> sol = q.oneSolution();
-                int[][] tablero = convertirTermATablero(sol.get("T"));
-                model.setTableroActual(tablero);
-                model.setTableroInicial(tablero); // Guardar como inicial
-            } else {
-                System.err.println("No se encontró solución para tablero_actual");
-                model.setTableroActual(new int[9][9]);
-            }
-            
-            model.setVidas(3);
-            model.setSugerencias(5);
-            stats.setEstado("abandono");
-        } catch (Exception e) {
-            e.printStackTrace();
-            // Tablero de respaldo en caso de error
-            int[][] tableroRespaldo = {
-                {0,0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0,0}
-            };
-            model.setTableroActual(tableroRespaldo);
-            model.setTableroInicial(tableroRespaldo);
-        }
+    try {
+        // Ejecutar nuevo juego en Prolog
+        new Query("iniciar_juego").hasSolution();
+
+        // Obtener tablero actual
+        Query q = new Query("tablero_actual(T)");
+        if (q.hasSolution()) {
+            Map<String, Term> sol = q.oneSolution();
+            int[][] tablero = convertirTermATablero(sol.get("T"));  // Convertir el término a un tablero 2D
+            model.setTableroActual(tablero);
+            model.setTableroInicial(tablero); // Guardar como inicial
+        } else {
+            System.err.println("No se encontró solución para tablero_actual");
+            model.setTableroActual(new int[9][9]);
+        }        
+
+    } catch (JPLException e) {
+        System.err.println("Error al iniciar juego: " + e.getMessage());
+    }
+}
+
+    private int termToInt(Term t) {
+    if (t.isInteger()) {
+        return t.intValue();
+    } else {
+        return 0; // Celda vacía o variable
+    }
     }
 
     private int[][] convertirTermATablero(Term term) {
         int[][] tablero = new int[9][9];
-        
-        // Verificar que es una lista
         if (!term.isList()) {
             throw new RuntimeException("Término no es una lista: " + term);
         }
-        
         Term[] filas = term.toTermArray();
-        
         for (int i = 0; i < 9; i++) {
             Term fila = filas[i];
-            
             if (!fila.isList()) {
                 throw new RuntimeException("Fila no es una lista: " + fila);
             }
-            
             Term[] cols = fila.toTermArray();
-            
             for (int j = 0; j < 9; j++) {
-                try {
-                    tablero[i][j] = cols[j].intValue();
-                } catch (JPLException e) {
-                    tablero[i][j] = 0; // Celda vacía
-                }
+                tablero[i][j] = termToInt(cols[j]);
             }
         }
         return tablero;
     }
 
     public boolean insertarNumero(int fila, int col, int valor) {
-        Query q = new Query(
-            "accion_insertar", 
-            new Term[]{
-                new org.jpl7.Integer(fila), 
-                new org.jpl7.Integer(col), 
+        try {
+            Query q = new Query("accion_insertar", new Term[]{
+                new org.jpl7.Integer(fila),
+                new org.jpl7.Integer(col),
                 new org.jpl7.Integer(valor)
+            });
+            if (q.hasSolution()) {
+                stats.incrementarVerificaciones();
+                return true;
+            }else {
+                stats.incrementarErrores();
+                model.setVidas(model.getVidas() - 1);
+                return false;
             }
-        );
-        
-        if (q.hasSolution()) {
-            stats.incrementarVerificaciones();
-            return true;
-        } else {
-            stats.incrementarErrores();
-            model.setVidas(model.getVidas() - 1);
+        } catch (JPLException e) {
+            System.err.println("Error al ejecutar Prolog: " + e.getMessage());
             return false;
         }
     }
+
     
     public void darSugerencia(int fila, int col) {
         new Query(
@@ -188,7 +174,4 @@ public class PrologController {
 
         model.setSolucion(solucion);
     }
-
-    
-    
 }

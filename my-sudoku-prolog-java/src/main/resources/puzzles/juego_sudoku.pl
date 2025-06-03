@@ -26,6 +26,7 @@
 :- dynamic vidas/1, sugerencias/1.
 :- dynamic estadisticas/5.
 :- dynamic solucion_actual/1.
+:- use_module('../engine/generador').
 
 % ------------------------------------------
 % iniciar_juego
@@ -34,7 +35,7 @@
 % ------------------------------------------
 iniciar_juego :-
     % Generar tablero completo y pistas
-    engine:generar_tablero_completo(Solucion),
+    engine:generar_tablero_completo(Solucion), 
     retractall(solucion_actual(_)),
     assert(solucion_actual(Solucion)),
     random_between(17, 25, NumPistas),
@@ -85,38 +86,87 @@ obtener(Tablero, F, C, V) :-
 % actualizar(Tablero, Fila, Columna, Valor, NuevoTablero)
 %   Genera NuevoTablero con Valor en la posición indicada.
 % ------------------------------------------
-actualizar(Tablero, F, C, V, Nuevo) :-
-    nth1(F, Tablero, Row, RestRows),
-    nth1(C, Row, _, RestCols),
-    nth1(C, NewRow, V, RestCols),
-    nth1(F, Nuevo, NewRow, RestRows).
+actualizar(Tablero, Fila, Columna, Valor, NuevoTablero) :-
+    ( Valor < 1 ; Valor > 9 ->
+        format('Error: valor ~w fuera de rango (1..9)~n', [Valor]),
+        fail
+    ; length(Tablero, N),
+        (Fila < 1 ; Fila > N ; Columna < 1 ; Columna > N) ->
+        format('Error: posición (~w,~w) fuera del tablero~n', [Fila,Columna]),
+        fail
+    ; obtener(Tablero, Fila, Columna, Celda),
+        nonvar(Celda) ->
+        format('Error: la celda (~w,~w) ya tiene valor fijo ~w~n', [Fila,Columna,Celda]),
+        fail
+    ; % actualización válida
+        actualizar_tablero(Tablero, Fila, Columna, Valor, NuevoTablero)
+    ).
+
+% ------------------------------------------
+% replace(+ListaOriginal, +Indice, +NuevoElemento, -ListaModificada)
+%   Reemplaza el elemento en la posición Indice (1-based)
+%   con NuevoElemento en una lista.
+% ------------------------------------------
+replace([_|T], 1, X, [X|T]).
+replace([H|T], I, X, [H|R]) :-
+    I > 1,
+    I1 is I - 1,
+    replace(T, I1, X, R).
+
+    
+
+
+actualizar_tablero(Tablero, Fila, Columna, Valor, NuevoTablero) :-
+    nth1(Fila, Tablero, Row),
+    nth1(Columna, Row, _, Restantes),
+    nth1(Columna, NuevaFila, Valor, Restantes),
+    replace(Tablero, Fila, NuevaFila, NuevoTablero).
 
 % ------------------------------------------
 % validar_movimiento(+F, +C, +V, -Resultado)
 %   Verifica reglas Sudoku y actualiza vidas y estadísticas.
 % ------------------------------------------
-validar_movimiento(F, C, V, success) :-
-    tablero_inicial(Init), obtener(Init, F, C, Cell), var(Cell),
-    tablero_actual(Act),
-    maplist(all_distinct, Act),
-    transpose(Act, Cols), maplist(all_distinct, Cols),
-    bloques_unicos(Act),
-    actualizar(Act, F, C, V, NewAct),
-    retract(tablero_actual(_)), assert(tablero_actual(NewAct)),
-    retract(estadisticas(Celdas, Ver, Err, Sug, Pen)),
-    Ver1 is Ver+1, assert(estadisticas(Celdas, Ver1, Err, Sug, Pen)).
+validar_movimiento(F,C,V,Resultado) :-
+    once(
+        (integer(V), V >= 1, V =< 9 -> true
+        ; format('Error: valor ~w no está entre 1 y 9~n', [V]), fail
+        )
+    ),
+    tablero_actual(Tab),
+    obtener(Tab, F, C, Celda),
+    (nonvar(Celda) ->
+        format('Error: celda (~w,~w) ya contiene un valor inicial~n', [F,C]),
+        Resultado = error
+    ;
+        % Probar actualizar sin modificar tablero original
+        (actualizar(Tab, F, C, V, NuevoTab) ->
+            (valido_sudoku(NuevoTab) ->
+                retractall(tablero_actual(_)),
+                assertz(tablero_actual(NuevoTab)),
+                Resultado = success
+            ; format('Movimiento inválido según reglas Sudoku~n', []),
+                Resultado = failure
+            )
+        ; Resultado = failure
+        )
+    ).
+
 validar_movimiento(_, _, _, failure) :-
-    retract(vidas(N)), N1 is N-1, assert(vidas(N1)),
+    retract(vidas(N)),
+    N1 is N - 1,
+    assert(vidas(N1)),
     retract(estadisticas(Celdas, Ver, Err, Sug, Pen)),
-    Err1 is Err+1, assert(estadisticas(Celdas, Ver, Err1, Sug, Pen)).
+    Err1 is Err + 1,
+    assert(estadisticas(Celdas, Ver, Err1, Sug, Pen)).
+
 
 % Verificación de bloques 3x3
 bloques_unicos(Tab) :-
     Tab = [R1,R2,R3,R4,R5,R6,R7,R8,R9],
-    bloques(R1,R2,R3), bloques(R4,R5,R6), bloques(R7,R8,R9).
+    bloques(R1,R2,R3),
+    bloques(R4,R5,R6),
+    bloques(R7,R8,R9).
 
-% Carga del generador externo
-:- use_module('../engine/generador').
 
 % ------------------------------------------
 % accion_insertar(+F, +C, +V)
@@ -190,9 +240,6 @@ reiniciar :-
  * 8) Reiniciar:        ?- reiniciar.
  */
 
-% Asegurar que tablero_actual siempre tenga un valor
-:- dynamic tablero_actual/1.
-tablero_actual([]).
 
 % Para depuración
 mostrar_tablero_actual :-

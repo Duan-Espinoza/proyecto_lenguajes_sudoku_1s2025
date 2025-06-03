@@ -25,17 +25,24 @@ public class SudokuGUI extends JFrame {
         actualizarTablero();
     }
 
+        private void actualizarEstado() {
+        lblVidas.setText("Vidas: " + model.getVidas());
+        lblSugerencias.setText("Sugerencias: " + model.getSugerencias());
+    }
+
     private void initUI() {
         setTitle("Sudoku Prolog-Java");
         setLayout(new BorderLayout());
-        
+
         // Panel de estado
         JPanel panelEstado = new JPanel();
-        lblVidas = new JLabel("Vidas: 3");
-        lblSugerencias = new JLabel("Sugerencias: 5");
+        lblVidas = new JLabel("Vidas: " + model.getVidas());
+        lblVidas.setFont(new Font("SansSerif", Font.BOLD, 16));
+        lblSugerencias = new JLabel("Sugerencias: " + model.getSugerencias());
+        lblSugerencias.setFont(new Font("SansSerif", Font.BOLD, 16));
         panelEstado.add(lblVidas);
         panelEstado.add(lblSugerencias);
-        
+
         // Panel del tablero
         JPanel tableroPanel = new JPanel(new GridLayout(9, 9));
         for (int i = 0; i < 9; i++) {
@@ -43,14 +50,14 @@ public class SudokuGUI extends JFrame {
                 celdas[i][j] = new JTextField();
                 celdas[i][j].setHorizontalAlignment(JTextField.CENTER);
                 celdas[i][j].setFont(new Font("SansSerif", Font.BOLD, 20));
-                
+
                 // Resaltar bloques 3x3
                 if ((i / 3 + j / 3) % 2 == 0) {
                     celdas[i][j].setBackground(new Color(240, 240, 240));
                 }
-                
+
                 final int fila = i, col = j;
-                
+
                 // Listener para selección de celda
                 celdas[i][j].addMouseListener(new MouseAdapter() {
                     @Override
@@ -60,17 +67,19 @@ public class SudokuGUI extends JFrame {
                         resaltarCeldaSeleccionada();
                     }
                 });
-                
+
                 // Listener para entrada de datos
                 celdas[i][j].addActionListener(e -> {
                     try {
-                        int valor = Integer.parseInt(celdas[fila][col].getText());
+                        int valor = Integer.parseInt(celdas[fila][col].getText());  // Obtener valor ingresado
+                        // Validar que el valor esté entre 1 y 9
                         if (valor >= 1 && valor <= 9) {
-                            if (controller.insertarNumero(fila+1, col+1, valor)) {
+                            if (controller.insertarNumero(fila + 1, col + 1, valor)) {
                                 celdas[fila][col].setForeground(Color.BLACK);
                             } else {
-                                celdas[fila][col].setForeground(Color.RED);
+                                celdas[fila][col].setForeground(Color.RED);  
                             }
+
                             actualizarEstado();
                         } else {
                             JOptionPane.showMessageDialog(this, "Solo números del 1 al 9");
@@ -79,11 +88,11 @@ public class SudokuGUI extends JFrame {
                         JOptionPane.showMessageDialog(this, "Entrada inválida");
                     }
                 });
-                
+
                 tableroPanel.add(celdas[i][j]);
             }
         }
-        
+
         // Panel de botones
         JPanel buttonPanel = new JPanel();
         String[] botones = {"Nuevo Juego", "Reiniciar", "Verificar", "Sugerencia", "Solución"};
@@ -92,21 +101,21 @@ public class SudokuGUI extends JFrame {
             btn.addActionListener(crearManejadorBoton(texto));
             buttonPanel.add(btn);
         }
-        
+
         add(panelEstado, BorderLayout.NORTH);
         add(tableroPanel, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
-        
+
         setSize(600, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
-    
+
     private void resaltarCeldaSeleccionada() {
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
                 celdas[i][j].setBackground(
-                    (i / 3 + j / 3) % 2 == 0 ? 
-                    new Color(240, 240, 240) : 
+                    (i / 3 + j / 3) % 2 == 0 ?
+                    new Color(240, 240, 240) :
                     Color.WHITE
                 );
             }
@@ -115,25 +124,30 @@ public class SudokuGUI extends JFrame {
             celdas[filaSeleccionada][colSeleccionada].setBackground(Color.YELLOW);
         }
     }
-    
+
     private ActionListener crearManejadorBoton(String texto) {
         return e -> {
             switch (texto) {
                 case "Nuevo Juego":
                     controller.nuevoJuego();
+                    filaSeleccionada = -1;
+                    colSeleccionada = -1;
                     actualizarTablero();
+                    actualizarEstado();
                     break;
-                    
+
                 case "Reiniciar":
                     // Restaurar tablero inicial
                     model.setTableroActual(model.getTableroInicial());
+                    filaSeleccionada = -1;
+                    colSeleccionada = -1;
                     actualizarTablero();
                     break;
-                    
+
                 case "Verificar":
                     JOptionPane.showMessageDialog(this, stats.toString());
                     break;
-                    
+
                 case "Sugerencia":
                     if (model.getSugerencias() > 0) {
                         if (filaSeleccionada >= 0 && colSeleccionada >= 0) {
@@ -147,7 +161,7 @@ public class SudokuGUI extends JFrame {
                         JOptionPane.showMessageDialog(this, "Sin sugerencias disponibles");
                     }
                     break;
-                    
+
                 case "Solución":
                     controller.mostrarSolucion();
                     int[][] solucion = model.getSolucion();
@@ -172,24 +186,20 @@ public class SudokuGUI extends JFrame {
             }
         };
     }
-    
+
     private void actualizarTablero() {
         int[][] tablero = model.getTableroActual();
-        // Verificar si tablero es null
         if (tablero == null) {
             System.err.println("Advertencia: Tablero es null, usando respaldo");
             tablero = new int[9][9];
         }
-        
-        // Imprimir en consola para depuración
+
         System.out.println("Actualizando tablero:");
         for (int i = 0; i < 9; i++) {
             System.out.println(Arrays.toString(tablero[i]));
         }
-        
-        
+
         for (int i = 0; i < 9; i++) {
-            //System.out.println(Arrays.toString(tablero[i]));
             for (int j = 0; j < 9; j++) {
                 if (tablero[i][j] != 0) {
                     celdas[i][j].setText(String.valueOf(tablero[i][j]));
@@ -204,11 +214,7 @@ public class SudokuGUI extends JFrame {
         }
         resaltarCeldaSeleccionada();
     }
-    
-    private void actualizarEstado() {
-        lblVidas.setText("Vidas: " + model.getVidas());
-        lblSugerencias.setText("Sugerencias: " + model.getSugerencias());
-    }
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new SudokuGUI().setVisible(true));
