@@ -10,6 +10,30 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
 
+/**
+ * SudokuGUI es la interfaz gráfica principal para la aplicación de Sudoku.
+ * 
+ * Esta clase extiende {@link JFrame} y proporciona una GUI completa para jugar Sudoku,
+ * incluyendo una cuadrícula de 9x9, indicadores de estado para vidas y sugerencias,
+ * y botones de control para acciones como nuevo juego, reinicio, verificación,
+ * solicitud de sugerencias y mostrar la solución.
+ *
+ * 
+ *   Integra un backend basado en Prolog mediante {@link PrologController} para la lógica del juego.
+ *   Muestra y actualiza el tablero de Sudoku usando una cuadrícula de componentes {@link JTextField}.
+ *   Gestiona y muestra estadísticas del jugador como vidas restantes y sugerencias disponibles.
+ *   Maneja interacciones del usuario, incluyendo selección de celdas, ingreso de números y acciones de botones.
+ *   Proporciona retroalimentación visual para movimientos correctos e incorrectos, y resalta la celda seleccionada.
+ *   Permite mostrar la solución y reinicia automáticamente el juego cuando se agotan las vidas.
+ *
+ * Uso:
+ *     public static void main(String[] args) {
+ *         SwingUtilities.invokeLater(() -> new SudokuGUI().setVisible(true));
+ *     }
+ *
+ * @author Duan Espinoza Olivares, Geovanni Gonzalez Aguilar
+ * @version 1.0
+ */
 public class SudokuGUI extends JFrame {
     private final SudokuModel model = new SudokuModel();
     private final GameStats stats = new GameStats();
@@ -18,6 +42,17 @@ public class SudokuGUI extends JFrame {
     private JLabel lblVidas, lblSugerencias;
     private int filaSeleccionada = -1;
     private int colSeleccionada = -1;
+
+
+    /**
+     * Nombre: SudokuGUI
+     * Descripción: Constructor de la clase SudokuGUI que inicializa la interfaz gráfica,
+     * configura el Look and Feel de FlatLaf y establece el controlador PrologController.
+     * Entrada: Ninguna.
+     * Salida: Crea una instancia de SudokuGUI con la interfaz gráfica lista para ser mostrada.
+     * Restricciones: Debe ser llamado en el hilo de eventos de Swing.
+     * Excepciones: Puede lanzar excepciones si hay problemas al cargar el Look and Feel o al inicializar la UI.
+     */
 
     public SudokuGUI() {
         try {
@@ -35,6 +70,14 @@ public class SudokuGUI extends JFrame {
         }
     }
 
+    /**
+     * Nombre: actualizarEstado
+     * Descripción: Actualiza las etiquetas de estado que muestran las vidas y sugerencias restantes.
+     * También verifica si el jugador ha perdido todas sus vidas y reinicia el juego si es necesario.
+     * Entrada: Ninguna.
+     * Salida: Actualiza las etiquetas de la interfaz gráfica y muestra un mensaje de fin de juego si es necesario.
+     * Restricciones: Debe ser llamado después de cada acción del usuario que modifique el estado del juego.
+     */
     private void actualizarEstado() {
         lblVidas.setText("Vidas: " + model.getVidas());
         lblSugerencias.setText("Sugerencias: " + model.getSugerencias());
@@ -46,6 +89,13 @@ public class SudokuGUI extends JFrame {
         }
     }
 
+    /**
+     * Nombre: initUI
+     * Descripción: Inicializa la interfaz gráfica de usuario.
+     * Entrada: Ninguna.
+     * Salida: Crea y organiza los componentes de la interfaz gráfica.
+     * Restricciones: Debe ser llamado en el hilo de eventos de Swing.
+     */
     private void initUI() {
         setTitle("Sudoku Prolog-Java");
         setLayout(new BorderLayout());
@@ -142,6 +192,13 @@ public class SudokuGUI extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
 
+    /**
+     * Nombre: resaltarCeldaSeleccionada
+     * Descripción: Resalta la celda seleccionada en el tablero de Sudoku.
+     * Entrada: Ninguna.
+     * Salida: Cambia el color de fondo de la celda seleccionada a un color amarillo suave.
+     * Restricciones: Debe ser llamado después de que se seleccione una celda.
+     */
     private void resaltarCeldaSeleccionada() {
         Color colorBloque = new Color(230, 240, 255);
         for (int i = 0; i < 9; i++) {
@@ -152,7 +209,15 @@ public class SudokuGUI extends JFrame {
         if (filaSeleccionada >= 0 && colSeleccionada >= 0) {
             celdas[filaSeleccionada][colSeleccionada].setBackground(new Color(255, 255, 160)); // amarillo suave
         }
-    }
+    }   
+
+    /**
+     * Nombre: crearManejadorBoton
+     * Descripción: Crea un ActionListener para manejar los eventos de los botones.
+     * Entrada: Un String que representa el texto del botón.
+     * Salida: Un ActionListener que maneja la acción del botón correspondiente.
+     * Restricciones: Debe ser llamado al crear cada botón en la interfaz gráfica.
+     */
 
     private ActionListener crearManejadorBoton(String texto) {
         return e -> {
@@ -207,6 +272,14 @@ public class SudokuGUI extends JFrame {
         };
     }
 
+    /**
+     * Nombre: actualizarTablero
+     * Descripción: Actualiza el tablero de Sudoku en la interfaz gráfica.
+     * Entrada: Ninguna.
+     * Salida: Refresca los componentes de la interfaz gráfica para mostrar el estado actual del tablero.
+     * Restricciones: Debe ser llamado después de cada acción del usuario que modifique el estado del juego.
+     */
+    
     private void actualizarTablero() {
         int[][] tablero = model.getTableroActual();
         if (tablero == null) {
@@ -228,6 +301,13 @@ public class SudokuGUI extends JFrame {
         resaltarCeldaSeleccionada();
     }
 
+    /**
+     * Nombre: main
+     * Descripción: Método principal que inicia la aplicación de Sudoku.
+     * Entrada: Argumentos de línea de comandos (no utilizados).
+     * Salida: Inicia la interfaz gráfica de Sudoku.
+     * Restricciones: Debe ser llamado en el hilo de eventos de Swing para asegurar que la GUI se construya correctamente.
+     */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new SudokuGUI().setVisible(true));
     }
