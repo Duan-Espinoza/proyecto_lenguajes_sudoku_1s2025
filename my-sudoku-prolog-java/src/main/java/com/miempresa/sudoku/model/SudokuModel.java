@@ -43,6 +43,4 @@ public class SudokuModel {
     public void setSolucion(int[][] solucion) { 
         this.solucion = solucion; 
     }
-
-
 }

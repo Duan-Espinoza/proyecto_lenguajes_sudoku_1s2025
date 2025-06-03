@@ -121,7 +121,7 @@ public class PrologController {
             if (q.hasSolution()) {
                 stats.incrementarVerificaciones();
                 return true;
-            }else {
+            } else {
                 stats.incrementarErrores();
                 model.setVidas(model.getVidas() - 1);
                 return false;

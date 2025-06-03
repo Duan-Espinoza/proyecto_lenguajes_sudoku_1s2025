@@ -27,6 +27,10 @@ public class SudokuGUI extends JFrame {
 
         private void actualizarEstado() {
         lblVidas.setText("Vidas: " + model.getVidas());
+        if (model.getVidas() <= 0) {
+            JOptionPane.showMessageDialog(this, "¡Juego terminado! No tienes más vidas.");
+            controller.nuevoJuego();  // Reiniciar el juego
+        }
         lblSugerencias.setText("Sugerencias: " + model.getSugerencias());
     }
 

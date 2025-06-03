@@ -7,6 +7,7 @@
 
 :- use_module(library(clpfd)).
 :- use_module(library(random)).
+:- use_module(library(system)).  
 
 % ==========================================================
 % Predicado: generar_tablero_completo(-Tablero)
@@ -28,7 +29,7 @@
 %   - Es una solución completamente válida de Sudoku
 % ==========================================================
 generar_tablero_completo(Tablero) :-
-    length(Tablero, 9),
+    length(Tablero, 9), 
     maplist(same_length(Tablero), Tablero),
     append(Tablero, Vars),
     Vars ins 1..9,
@@ -39,7 +40,7 @@ generar_tablero_completo(Tablero) :-
     bloques(R1, R2, R3),
     bloques(R4, R5, R6),
     bloques(R7, R8, R9),
-    label(Vars).
+    label_aleatorio(Vars).
 
 % ==========================================================
 % Predicado: bloques(+Fila1, +Fila2, +Fila3)
@@ -182,7 +183,8 @@ dividir_tablero(Lista, [Fila|Rest]) :-
 %   - Debe tener al menos 2 pistas por fila y columna para evitar trivialidad
 % ==========================================================
 nuevo_juego(Tablero) :-
-     repeat,
+    semilla_aleatoria,
+    repeat,
         generar_tablero_completo(Completo),
         random_between(17, 25, Pistas),
         generar_pistas(Completo, Tablero, Pistas),
@@ -240,9 +242,9 @@ cuenta_pistas(Lista, Cantidad) :-
 %   ni bloques 3x3 (ignorando celdas vacías).
 % ==========================================================
 valido_sudoku(Tablero) :-
-    maplist(valida_lista, Tablero),         % filas válidas
+    maplist(valida_lista, Tablero),
     transpose(Tablero, Columnas),
-    maplist(valida_lista, Columnas),        % columnas válidas
+    maplist(valida_lista, Columnas),
     Tablero = [R1,R2,R3,R4,R5,R6,R7,R8,R9],
     bloques_validos(R1, R2, R3),
     bloques_validos(R4, R5, R6),
@@ -257,21 +259,126 @@ bloques_validos([A,B,C|R1], [D,E,F|R2], [G,H,I|R3]) :-
     valida_lista([A,B,C,D,E,F,G,H,I]),
     bloques_validos(R1, R2, R3).
 
-% Verifica que no haya cadenas de solo una celda conectada (horizontal o vertical)
+% ==========================================================
+% Predicado: no_cadenas_triviales(+Tablero)
+%
+% Descripción:
+%   Verifica que no existan "cadenas triviales" en el tablero,
+%   es decir, filas o columnas que contengan solo una pista
+%   o que tengan pistas aisladas (sin continuidad).
+%
+% Entradas:
+%   - Tablero: matriz 9x9 parcialmente llena
+%
+% Salidas:
+%   true si no hay cadenas triviales en filas y columnas
+%
+% Restricciones:
+%   - No debe haber filas o columnas con solo 1 pista
+%   - No debe haber pistas aisladas que no formen parte de una cadena continua
+% ==========================================================
+
 no_cadenas_triviales(Tablero) :-
-    % Revisa filas
     forall(member(Fila, Tablero), \+ cadena_trivial(Fila)),
-    % Revisa columnas
     transpose(Tablero, Columnas),
     forall(member(Col, Columnas), \+ cadena_trivial(Col)).
 
-% Detecta si hay una pista sola sin vecinos en una fila/columna
+% ==========================================================
+% Predicado: cadena_trivial(+Lista)
+%
+% Descripción:
+%   Verifica si una lista (fila o columna) tiene una cadena
+%   trivial, es decir, si contiene solo una pista o si las pistas
+%   están aisladas (no forman una secuencia continua).
+%
+% Entradas:
+%   - Lista: fila o columna del tablero
+%
+% Salidas:
+%   true si la lista tiene una cadena trivial
+%
+% Restricciones:
+%   - Una cadena trivial es aquella con solo 1 pista o con pistas
+%     que no están en posiciones consecutivas
+% ==========================================================
+
 cadena_trivial(Lista) :-
     findall(Index, (nth0(Index, Lista, Val), nonvar(Val)), Indices),
     sort(Indices, Ordenadas),
     incluye_aislada(Ordenadas).
 
+
+% ==========================================================
+% Predicado: incluye_aislada(+Lista)
+%
+% Descripción:
+%   Verifica si una lista de índices contiene pistas aisladas,
+%   es decir, si hay al menos un par de índices que no están
+%   consecutivos. Si hay un índice aislado, significa que no
+% forman una cadena continua.
+%
+% Entradas:
+%   - Lista: lista de índices ordenados donde hay pistas
+%
+% Salidas:
+%   true si hay al menos un índice aislado
+%
+% Restricciones:
+%   - Una lista con un solo elemento no puede tener pistas aisladas
+%   - Una lista con dos elementos puede ser aislada si no son consecutivos
+
 incluye_aislada([_]). % Solo 1 pista → trivial
 incluye_aislada([A,B|Resto]) :-
     (B - A > 1 -> true ; incluye_aislada([B|Resto])).
 
+
+% ==========================================================
+% Predicado: semilla_aleatoria
+%
+% Descripción:
+%   Inicializa la semilla aleatoria basada en el tiempo actual.
+%   Esto asegura que cada vez que se ejecute el generador, los
+%   tableros generados sean diferentes y aleatorios.
+%
+% Entradas:
+%   Ninguna
+%
+% Salidas:
+%   - Establece la semilla aleatoria para el generador de números
+%   - Utiliza el tiempo actual para crear una semilla única
+%
+% Restricciones:
+%   - Asegura que cada ejecución del generador produzca resultados
+%     diferentes y no repetidos
+% ==========================================================
+
+semilla_aleatoria :-
+    get_time(T),
+    Seed is round(T),
+    set_random(seed(Seed)).
+
+% ==========================================================
+% Predicado: label_aleatorio(+Vars)
+%
+% Descripción:
+%   Etiqueta las variables del tablero de Sudoku de forma aleatoria
+%   utilizando el algoritmo de búsqueda de primer cambio (ffc).
+%   Esto asegura que las variables se asignen de manera eficiente
+%   y se evite la generación de soluciones repetitivas.
+%
+% Entradas:
+%   - Vars: lista de variables del tablero que deben ser etiquetadas
+%
+% Salidas:
+%   - Asigna valores a las variables de forma aleatoria
+%
+% Restricciones:
+%   - Utiliza el algoritmo de etiquetado ffc para asignar valores
+%   - Asegura que las variables se llenen de manera eficiente
+%   - Utiliza random_permutation para mezclar las variables antes de etiquetar
+%   - Asegura que las variables se llenen de manera eficiente
+% ==========================================================
+
+label_aleatorio(Vars) :-
+    random_permutation(Vars, VarsRandom),
+    labeling([ffc], VarsRandom).
