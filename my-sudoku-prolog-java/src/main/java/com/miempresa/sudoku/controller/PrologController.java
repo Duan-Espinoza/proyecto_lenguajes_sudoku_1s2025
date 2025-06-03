@@ -204,20 +204,7 @@
             return model.getVidas();  // fallback si no hay solución
         }
         
-        //Reinicia el sudoku a su estado inicial
-        /**
-         * reiniciar :-
-        tablero_inicial(Init),
-        retractall(tablero_actual(_)),
-        assert(tablero_actual(Init)),
-        retractall(vidas(_)), assert(vidas(3)),
-        retractall(sugerencias(_)), assert(sugerencias(5)),
-        flatten(Init, Flat), length(Flat, Total),
-        retractall(estadisticas(_,_,_,_,_)),
-        assert(estadisticas(Total, 0, 0, 0, pending)),
-        writeln('(PL) Tablero reiniciado al estado inicial.'),
-        mostrar_tablero.
-         */
+
         public void reiniciarSudoku() {
             try {
                 // Ejecutar reinicio en Prolog
