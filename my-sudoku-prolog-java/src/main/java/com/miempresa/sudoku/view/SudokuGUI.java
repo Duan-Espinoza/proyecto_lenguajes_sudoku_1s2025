@@ -60,7 +60,7 @@ public class SudokuGUI extends JFrame {
         } catch (Exception e) {
             System.err.println("Error cargando FlatLaf");
         }
-
+        
         controller = new PrologController(model, stats);
         try {
             initUI();
@@ -266,12 +266,12 @@ public class SudokuGUI extends JFrame {
                             celdas[i][j].setEditable(false);
                         }
                     }
-                    stats.setEstado("autosolución");
+                
                     break;
             }
         };
     }
-
+    
     /**
      * Nombre: actualizarTablero
      * Descripción: Actualiza el tablero de Sudoku en la interfaz gráfica.

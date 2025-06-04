@@ -167,6 +167,7 @@
                 int[][] tablero = convertirTermATablero(sol.get("T"));  // Convertir el término a un tablero 2D
                 model.setTableroActual(tablero);
                 model.setTableroInicial(tablero);  // Guardar el tablero inicial
+                stats.nuevoJuego();  // Reiniciar estadísticas del juego
 
                 System.out.println("(Funcion nuevoJuego) Tablero actual:");
                 for (int i = 0; i < tablero.length; i++) {
@@ -178,6 +179,7 @@
             } else {
                 System.err.println("No se encontró solución para tablero_actual");
                 model.setTableroActual(new int[9][9]);
+
             }        
         } catch (JPLException e) {
             System.err.println("Error al iniciar juego: " + e.getMessage());
@@ -266,10 +268,16 @@
                     System.out.println(" (JAVA) Movimiento correcto: " + valor + " en (" + fila + ", " + col + ")");
                     model.getTableroActual()[fila - 1][col - 1] = valor; 
                     model.setTableroActual(model.getTableroActual());
+                    stats.registrarIngresoCelda();  // Registrar ingreso de celda
+                    stats.registrarVerificacion(true);  // Registrar verificación correcta
+
                 } else {
                     System.out.println("(JAVA) Movimiento incorrecto: " + valor + " en (" + fila + ", " + col + ")");
                     int vidasRestantes = obtenerVidasDesdeProlog();
                     model.setVidas(vidasRestantes);
+                    stats.registrarIngresoCelda();  // Registrar ingreso de celda
+                    stats.registrarVerificacion(false);  // Registrar error de verificación
+                
                     System.out.println("(JAVA) Vidas restantes: " + vidasRestantes);
                 }
 
@@ -304,7 +312,7 @@
                     new org.jpl7.Integer(col)
                 }
             ).hasSolution();
-            stats.incrementarSugerencias();
+            stats.registrarSugerencia();  // Registrar la sugerencia en las estadísticas
             model.setSugerencias(model.getSugerencias() - 1);
         }
 
@@ -348,6 +356,7 @@
             }
                                     
             model.setSolucion(solucion);
+            stats.setTipoFinalizacionSolucion();
         }
 
         /**
@@ -413,6 +422,18 @@
             } catch (JPLException e) {
                 System.err.println("Error al reiniciar Sudoku: " + e.getMessage());
             }
+        }
+        /**
+         * Nombre: getStats
+         * Descripción: Obtiene las estadísticas del juego de Sudoku.
+         * Parámetros: No recibe parámetros.
+         * Salida: Retorna la instancia de GameStats que contiene las estadísticas del juego.
+         * Restricciones: No aplica.
+         * Excepciones: No lanza excepciones.
+         * Objetivo: Proporcionar acceso a las estadísticas del juego para su visualización o análisis.
+         */
+        public GameStats getStats() {
+            return stats;
         }
     }
 
