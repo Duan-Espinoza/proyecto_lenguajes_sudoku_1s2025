@@ -26,6 +26,39 @@ public class GameStats {
             sugerenciasUsadas = 0;
             tipoFinalizacion = null;
         }
+
+        //Getters y Setters
+        public int getCeldasIngresadas() {
+            return celdasIngresadas;
+        }
+        public void setCeldasIngresadas(int celdasIngresadas) {
+            this.celdasIngresadas = celdasIngresadas;
+        }
+        public int getVerificaciones() {
+            return verificaciones;
+        }
+        public void setVerificaciones(int verificaciones) {
+            this.verificaciones = verificaciones;
+        }
+        public int getErroresVerificacion() {
+            return erroresVerificacion;
+        }
+        public void setErroresVerificacion(int erroresVerificacion) {
+            this.erroresVerificacion = erroresVerificacion;
+        }
+        public int getSugerenciasUsadas() {
+            return sugerenciasUsadas;
+        }
+        public void setSugerenciasUsadas(int sugerenciasUsadas) {
+            this.sugerenciasUsadas = sugerenciasUsadas;
+        }
+        public TipoFinalizacion getTipoFinalizacion() {
+            return tipoFinalizacion;
+        }
+        public void setTipoFinalizacion(TipoFinalizacion tipoFinalizacion) {
+            this.tipoFinalizacion = tipoFinalizacion;
+        }
+
         @Override
         public String toString() {
             return "RegistroJuego{" +
@@ -47,7 +80,7 @@ public class GameStats {
     }
 
     // Se llama al iniciar un nuevo juego
-    public void nuevoJuego() {
+    public void nuevoJuego() {      
         if (juegoActual != null && juegoActual.tipoFinalizacion == null) {
             juegoActual.tipoFinalizacion = TipoFinalizacion.ABANDONO;
             juegos.add(juegoActual);
@@ -126,5 +159,16 @@ public class GameStats {
                 ", juegos=" + juegos.size() +
                 '}';
     }
+    public RegistroJuego obtenerJuegoActual() {
+    return juegoActual;
+}
+
+    //Reiniicializa las estadísticas del juego actual
+    public void reiniciarJuegoActual() {
+        juegoActual = new RegistroJuego();
+    }
+
+    
+
 }
 

@@ -80,12 +80,28 @@ public class SudokuGUI extends JFrame {
      */
     private void actualizarEstado() {
         lblVidas.setText("Vidas: " + model.getVidas());
-        lblSugerencias.setText("Sugerencias: " + model.getSugerencias());
+        lblSugerencias.setText("Sugerencias: " + model.getSugerencias());   
 
         if (model.getVidas() <= 0) {
             JOptionPane.showMessageDialog(this, "¡Juego terminado! No tienes más vidas.");
-            controller.nuevoJuego();
-            actualizarTablero();
+            //Mensaje con opcion de reiniciar el juego o iniciar uno nuevo
+            int opcion = JOptionPane.showOptionDialog(this, "¿Deseas iniciar un nuevo juego o reiniciar el actual?",
+                    "Juego Terminado", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
+                    null, new String[]{"Nuevo Juego", "Reiniciar"}, "Nuevo Juego");
+            if (opcion == JOptionPane.YES_OPTION) {
+                controller.nuevoJuego();
+                filaSeleccionada = -1;
+                colSeleccionada = -1;
+                actualizarTablero();
+                actualizarEstado();
+            } else if (opcion == JOptionPane.NO_OPTION) {
+                controller.reiniciarSudoku();
+                stats.reiniciarJuegoActual();
+                filaSeleccionada = -1;
+                colSeleccionada = -1;
+                actualizarTablero();
+                actualizarEstado();
+            }
         }
     }
 
@@ -155,12 +171,6 @@ public class SudokuGUI extends JFrame {
                         JOptionPane.showMessageDialog(this, "Entrada inválida");
                     } finally {
                         actualizarEstado();
-                        if (model.getVidas() <= 0) {
-                            JOptionPane.showMessageDialog(this, "¡Juego terminado!");
-                            controller.nuevoJuego();
-                            actualizarTablero();
-                            actualizarEstado();
-                        }
                     }
                 });
 
@@ -229,16 +239,22 @@ public class SudokuGUI extends JFrame {
                     actualizarTablero();
                     actualizarEstado();
                     break;
+
                 case "Reiniciar":
+
                     controller.reiniciarSudoku();
+                    stats.reiniciarJuegoActual();
                     filaSeleccionada = -1;
                     colSeleccionada = -1;
                     actualizarTablero();
                     actualizarEstado();
                     break;
+
                 case "Verificar":
-                    JOptionPane.showMessageDialog(this, stats.toString());
+                    String mensaje = controller.resumenEstadisticas();
+                    JOptionPane.showMessageDialog(this, mensaje, "Estadísticas", JOptionPane.INFORMATION_MESSAGE);
                     break;
+
                 case "Sugerencia":
                     if (model.getSugerencias() > 0) {
                         if (filaSeleccionada >= 0 && colSeleccionada >= 0) {

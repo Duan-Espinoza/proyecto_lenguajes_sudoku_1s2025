@@ -2,8 +2,13 @@
 
     import com.miempresa.sudoku.model.SudokuModel;
     import com.miempresa.sudoku.model.GameStats;
-    import java.util.Map;
-    import org.jpl7.*;
+import com.miempresa.sudoku.model.GameStats.RegistroJuego;
+
+import java.util.Map;
+
+import javax.swing.JOptionPane;
+
+import org.jpl7.*;
     import java.io.UnsupportedEncodingException;
     import java.net.URLDecoder;
     import java.nio.charset.StandardCharsets;
@@ -167,6 +172,8 @@
                 int[][] tablero = convertirTermATablero(sol.get("T"));  // Convertir el término a un tablero 2D
                 model.setTableroActual(tablero);
                 model.setTableroInicial(tablero);  // Guardar el tablero inicial
+                model.setVidas(3);  // Reiniciar vidas
+                model.setSugerencias(5);  // Reiniciar sugerencias
                 stats.nuevoJuego();  // Reiniciar estadísticas del juego
 
                 System.out.println("(Funcion nuevoJuego) Tablero actual:");
@@ -435,5 +442,41 @@
         public GameStats getStats() {
             return stats;
         }
-    }
+
+        
+        //Mostrar resumen en verificar
+        /**
+         * Nombre: mostrarResumenEstadisticas
+         * Descripción: Muestra un resumen de las estadísticas del juego, incluyendo el número de juegos jugados,
+         * celdas ingresadas, verificaciones, errores de verificación y sugerencias usadas.
+         * Parámetros: No recibe parámetros.
+         * Salida: Retorna un String con el resumen de las estadísticas.
+         * Restricciones: No aplica.
+         * Excepciones: No lanza excepciones.
+         * Objetivo: Proporcionar un resumen claro y conciso de las estadísticas del juego al jugador.
+         */
+        public String resumenEstadisticas() {
+            RegistroJuego actual = stats.obtenerJuegoActual();
+            String mensaje = "<html><body style='width: 300px;'>" +
+                "<h2 style='color:#2E86C1;'> Estadísticas del Juego Actual</h2>" +
+                "<ul>" +
+                "<li><b>Celdas ingresadas:</b> " + actual.getCeldasIngresadas() + "</li>" +
+                "<li><b>Verificaciones realizadas:</b> " + actual.getVerificaciones() + "</li>" +
+                "<li><b>Errores de verificación:</b> <span style='color:" + 
+                    (actual.getErroresVerificacion() > 0 ? "red" : "green") + ";'>" + actual.getErroresVerificacion() + "</span></li>" +
+                "<li><b>Sugerencias usadas:</b> " + actual.getSugerenciasUsadas() + "</li>" +
+                "<li><b>Tipo de finalización:</b> " + 
+                    (actual.getTipoFinalizacion() != null ? actual.getTipoFinalizacion() : "En curso") + "</li>" +
+                "<li><b>Juegos finalizados en sesión:</b> " + stats.obtenerEstadisticas().size() + "</li>" +
+                "</ul>" +
+                "</body></html>";
+                return mensaje;
+
+        }
+
+        public void reiniciarJuegoActual() {
+            stats.reiniciarJuegoActual();
+        }
+
+}
 
